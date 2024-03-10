@@ -5,6 +5,12 @@ from django.conf import settings
 class Play(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
+    actors = models.ManyToManyField('Actor')
+    genres = models.ManyToManyField('Genre')
+
+    @property
+    def actor_count(self):
+        return self.actor_set.count()
 
     def __str__(self):
         return self.title
@@ -55,6 +61,7 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
     performance = models.ForeignKey(Performance, on_delete=models.CASCADE)
+    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.name} - {self.seat} - {self.performance}"
+        return f"{self.row}, {self.seat} - {self.performance} - {self.reservation}"
