@@ -1,12 +1,13 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import UniqueConstraint
 
 
 class Play(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    actors = models.ManyToManyField("Actor", on_delete=models.CASCADE, related_name="plays")
-    genres = models.ManyToManyField("Genre", on_delete=models.CASCADE, related_name="plays")
+    actors = models.ManyToManyField("Actor", related_name="plays")
+    genres = models.ManyToManyField("Genre", related_name="plays")
 
     @property
     def actor_count(self):
