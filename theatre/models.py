@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.db.models import UniqueConstraint
+from rest_framework.exceptions import ValidationError
 
 
 class Play(models.Model):
@@ -43,16 +43,24 @@ class TheatreHall(models.Model):
 
 class Performance(models.Model):
     play = models.ForeignKey(Play, on_delete=models.CASCADE)
-    theatre_hall = models.ForeignKey(TheatreHall, on_delete=models.CASCADE, related_name="performances")
+    theatre_hall = models.ForeignKey(
+        TheatreHall,
+        on_delete=models.CASCADE,
+        related_name="performances"
+    )
     show_time = models.DateTimeField()
 
     def __str__(self):
-        return f"{self.play} {self.theatre_hall} {show_time}"
+        return f"{self.play} {self.theatre_hall} {self.show_time}"
 
 
 class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reservations")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reservations"
+    )
 
     def __str__(self):
         return f"{self.created_at} - {self.user}"
@@ -61,13 +69,51 @@ class Reservation(models.Model):
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
-    performance = models.ForeignKey(Performance, on_delete=models.CASCADE, related_name="tickets")
-    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="tickets")
+    performance = models.ForeignKey(
+        Performance,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
 
     class Meta:
-        constraints = [
-            UniqueConstraint(fields=["row", "seat"], name="unique_ticket_row_seat")
-        ]
+        unique_together = ("seat", "performance")
 
     def __str__(self):
-        return f"{self.row}, {self.seat} - {self.performance} - {self.reservation}"
+        return (
+            f"{self.row}, {self.seat} - "
+            f"{self.performance} - {self.reservation}"
+        )
+
+    @staticmethod
+    def validate_seat(seat: int, seats_in_row: int, error_to_raise):
+        if not (1 <= seat <= seats_in_row):
+            raise error_to_raise({
+                "seat": f"seat must be in range[1, {seats_in_row}], not {seat}"
+            })
+
+    def clean(self):
+        Ticket.validate_row(
+            self.seat,
+            self.ticket.performance.theatre_hall.seats_in_row,
+            ValidationError
+        )
+
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None
+    ):
+        self.full_clean()
+        return super(Ticket, self).save(
+            force_insert,
+            force_update,
+            using,
+            update_fields
+        )

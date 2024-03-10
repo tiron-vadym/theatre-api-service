@@ -15,7 +15,14 @@ from .models import (
 class PlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
-        fields = ("id", "title", "description", "actors", "genres", "actor_count")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "actors",
+            "genres",
+            "actor_count"
+        )
 
 
 class PlayerListSerializer(serializers.ModelSerializer):
@@ -57,6 +64,15 @@ class PerformanceSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        data = super(TicketSerializer, self).validate(attrs)
+        Ticket.validate_seat(
+            attrs["seat"],
+            attrs["ticket"].performance.theatre_hall.seats_in_row,
+            serializers.ValidationError
+        )
+        return data
+
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "performance", "reservation")
@@ -76,7 +92,7 @@ class ReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ("id", "created_at", "user")
+        fields = ("id", "tickets", "created_at")
 
     @transaction.atomic
     def create(self, validated_data):

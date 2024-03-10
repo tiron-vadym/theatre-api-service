@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.authentication import TokenAuthentication
 
@@ -14,8 +12,8 @@ from .models import (
 )
 from .serializers import (
     PlaySerializer,
-    PlayerListSerializer,
-    PlayerDetailSerializer,
+    PlayListSerializer,
+    PlayDetailSerializer,
     ActorSerializer,
     GenreSerializer,
     TheatreHallSerializer,
@@ -84,7 +82,10 @@ class ReservationViewSet(GenericViewSet):
 
 
 class TicketViewSet(GenericViewSet):
-    queryset = Ticket.objects.all().select_related("performance", "reservation")
+    queryset = Ticket.objects.all().select_related(
+        "performance",
+        "reservation"
+    )
     serializer_class = TicketSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
