@@ -76,6 +76,12 @@ class ReservationViewSet(GenericViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 
 class TicketViewSet(GenericViewSet):
     queryset = Ticket.objects.all().select_related("performance", "reservation")

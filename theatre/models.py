@@ -10,7 +10,7 @@ class Play(models.Model):
 
     @property
     def actor_count(self):
-        return self.actor_set.count()
+        return self.actors.count()
 
     def __str__(self):
         return self.title
@@ -62,6 +62,11 @@ class Ticket(models.Model):
     seat = models.IntegerField()
     performance = models.ForeignKey(Performance, on_delete=models.CASCADE, related_name="tickets")
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="tickets")
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["row", "seat"], name="unique_ticket_row_seat")
+        ]
 
     def __str__(self):
         return f"{self.row}, {self.seat} - {self.performance} - {self.reservation}"
