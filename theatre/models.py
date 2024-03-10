@@ -5,8 +5,8 @@ from django.conf import settings
 class Play(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    actors = models.ManyToManyField('Actor')
-    genres = models.ManyToManyField('Genre')
+    actors = models.ManyToManyField("Actor", on_delete=models.CASCADE, related_name="plays")
+    genres = models.ManyToManyField("Genre", on_delete=models.CASCADE, related_name="plays")
 
     @property
     def actor_count(self):
@@ -42,7 +42,7 @@ class TheatreHall(models.Model):
 
 class Performance(models.Model):
     play = models.ForeignKey(Play, on_delete=models.CASCADE)
-    theatre_hall = models.ForeignKey(TheatreHall, on_delete=models.CASCADE)
+    theatre_hall = models.ForeignKey(TheatreHall, on_delete=models.CASCADE, related_name="performances")
     show_time = models.DateTimeField()
 
     def __str__(self):
@@ -51,7 +51,7 @@ class Performance(models.Model):
 
 class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reservations")
 
     def __str__(self):
         return f"{self.created_at} - {self.user}"
@@ -60,8 +60,8 @@ class Reservation(models.Model):
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
-    performance = models.ForeignKey(Performance, on_delete=models.CASCADE)
-    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
+    performance = models.ForeignKey(Performance, on_delete=models.CASCADE, related_name="tickets")
+    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="tickets")
 
     def __str__(self):
         return f"{self.row}, {self.seat} - {self.performance} - {self.reservation}"
