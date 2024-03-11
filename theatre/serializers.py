@@ -33,20 +33,40 @@ class PlaySerializer(serializers.ModelSerializer):
             "description",
             "actors",
             "genres",
-            "actor_count"
+            "actor_count",
+            "image"
         )
 
 
 class PlayListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
-        fields = ("id", "title", "description", "actor_count")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "actor_count",
+            "image"
+        )
 
 
 class PlayDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
-        fields = ("id", "title", "description", "actors", "genres")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "actors",
+            "genres",
+            "image"
+        )
+
+
+class PlayImageSerializer(PlaySerializer):
+    class Meta:
+        model = Play
+        fields = ("id", "image")
 
 
 class TheatreHallSerializer(serializers.ModelSerializer):
@@ -81,7 +101,10 @@ class PerformanceDetailSerializer(PerformanceSerializer):
         fields = ("id", "play", "theatre_hall", "show_time", "taken_seats")
 
     def get_taken_seats(self, obj):
-        return Ticket.objects.filter(performance=obj).values_list("row", "seat")
+        return Ticket.objects.filter(performance=obj).values_list(
+            "row",
+            "seat"
+        )
 
 
 class TicketSerializer(serializers.ModelSerializer):

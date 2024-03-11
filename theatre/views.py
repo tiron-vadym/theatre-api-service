@@ -1,7 +1,11 @@
-from django.db.models import Count
+from django.db.models import Count, F
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.authentication import TokenAuthentication
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+
 
 from .models import (
     Play,
@@ -16,6 +20,7 @@ from .serializers import (
     PlaySerializer,
     PlayListSerializer,
     PlayDetailSerializer,
+    PlayImageSerializer,
     ActorSerializer,
     GenreSerializer,
     TheatreHallSerializer,
@@ -51,7 +56,18 @@ class PlayViewSet(GenericViewSet):
             return PlayListSerializer
         if self.action == "retrieve":
             return PlayDetailSerializer
+        if self.action == "upload_image":
+            return PlayImageSerializer
         return PlaySerializer
+
+    @action(methods=["POST"], detail=True, url_path="upload-image")
+    def upload_image(self, request, pk=None):
+        play = self.get_object()
+        serializer = self.get_serializer(play, data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ActorViewSet(GenericViewSet):
@@ -88,7 +104,9 @@ class PerformanceViewSet(GenericViewSet):
             queryset = (
                 queryset
                 .select_related("play")
-                .annotate(seats_available=F("theatre_hall__seats_in_row") - Count("tickets"))
+                .annotate(
+                    seats_available=F("theatre_hall__seats_in_row") - Count("tickets")
+                )
             ).order_by("id")
 
         return queryset
