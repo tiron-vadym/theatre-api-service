@@ -12,6 +12,18 @@ from .models import (
 )
 
 
+class ActorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Actor
+        fields = ("id", "first_name", "last_name")
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = ("id", "name")
+
+
 class PlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
@@ -25,28 +37,16 @@ class PlaySerializer(serializers.ModelSerializer):
         )
 
 
-class PlayerListSerializer(serializers.ModelSerializer):
+class PlayListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
         fields = ("id", "title", "description", "actor_count")
 
 
-class PlayerDetailSerializer(serializers.ModelSerializer):
+class PlayDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
         fields = ("id", "title", "description", "actors", "genres")
-
-
-class ActorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Actor
-        fields = ("id", "first_name", "last_name")
-
-
-class GenreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Genre
-        fields = ("id", "name")
 
 
 class TheatreHallSerializer(serializers.ModelSerializer):
@@ -61,6 +61,27 @@ class PerformanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Performance
         fields = ("id", "play", "theatre_hall", "show_time")
+
+
+class PerformanceListSerializer(PerformanceSerializer):
+    play = PlaySerializer(many=False, read_only=True)
+    seats_available = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Performance
+        fields = ("id", "play", "theatre_hall", "show_time", "seats_available")
+
+
+class PerformanceDetailSerializer(PerformanceSerializer):
+    play = PlaySerializer(many=False, read_only=True)
+    taken_seats = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Performance
+        fields = ("id", "play", "theatre_hall", "show_time", "taken_seats")
+
+    def get_taken_seats(self, obj):
+        return Ticket.objects.filter(performance=obj).values_list("row", "seat")
 
 
 class TicketSerializer(serializers.ModelSerializer):

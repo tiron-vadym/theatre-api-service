@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.authentication import TokenAuthentication
 
@@ -18,6 +19,8 @@ from .serializers import (
     GenreSerializer,
     TheatreHallSerializer,
     PerformanceSerializer,
+    PerformanceListSerializer,
+    PerformanceDetailSerializer,
     ReservationSerializer,
     TicketSerializer,
     TicketListSerializer,
@@ -71,10 +74,29 @@ class TheatreHallViewSet(GenericViewSet):
 
 
 class PerformanceViewSet(GenericViewSet):
-    queryset = Performance.objects.all().select_related("play")
+    queryset = Performance.objects.all()
     serializer_class = PerformanceSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related("play")
+                .annotate(seats_available=F("theatre_hall__seats_in_row") - Count("tickets"))
+            ).order_by("id")
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PerformanceListSerializer
+        if self.action == "retrieve":
+            return PerformanceDetailSerializer
+        return PerformanceSerializer
 
 
 class ReservationViewSet(GenericViewSet):
