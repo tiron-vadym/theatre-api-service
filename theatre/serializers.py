@@ -124,6 +124,14 @@ class ReservationSerializer(serializers.ModelSerializer):
         return reservation
 
 
+class ReservationListSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Reservation
+        fields = ("id", "tickets", "created_at")
+
+
 class TicketDetailSerializer(TicketSerializer):
     performance = PerformanceSerializer(many=False, read_only=True)
     reservation = ReservationSerializer(many=False, read_only=True)
