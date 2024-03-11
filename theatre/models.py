@@ -3,20 +3,6 @@ from django.conf import settings
 from rest_framework.exceptions import ValidationError
 
 
-class Play(models.Model):
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    actors = models.ManyToManyField("Actor", related_name="plays")
-    genres = models.ManyToManyField("Genre", related_name="plays")
-
-    @property
-    def actor_count(self):
-        return self.actors.count()
-
-    def __str__(self):
-        return self.title
-
-
 class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -30,6 +16,20 @@ class Genre(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Play(models.Model):
+    title = models.CharField(max_length=255, unique=True)
+    description = models.TextField()
+    actors = models.ManyToManyField("Actor", related_name="plays")
+    genres = models.ManyToManyField("Genre", related_name="plays")
+
+    @property
+    def actor_count(self):
+        return self.actors.count()
+
+    def __str__(self):
+        return self.title
 
 
 class TheatreHall(models.Model):
