@@ -10,7 +10,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from theatre.models import Play, Actor, Genre
+from theatre.models import Play, Actor, Genre, TheatreHall, Performance
 from theatre.serializers import PlayDetailSerializer, PlayListSerializer
 
 PLAY_URL = reverse("theatre:play-list")
@@ -22,7 +22,6 @@ def sample_actor(**params):
     defaults.update(params)
 
     return Actor.objects.create(**defaults)
-
 
 
 def sample_genre(**params):
@@ -63,7 +62,6 @@ def sample_performance(**params):
     return Performance.objects.create(**defaults)
 
 
-
 def image_upload_url(play_id):
     """Return URL for recipe image upload"""
     return reverse("theatre:play-upload-image", args=[play_id])
@@ -83,10 +81,10 @@ class PlayImageUploadTests(TestCase):
         self.actor = sample_actor()
         self.genre = sample_genre()
         self.play = sample_play()
-        self.performance = sample_movie_performance()
+        self.performance = sample_performance()
 
     def tearDown(self):
-        self.movie.image.delete()
+        self.play.image.delete()
 
     def test_upload_image_to_play(self):
         """Test uploading an image to play"""
@@ -214,7 +212,7 @@ class AuthenticatedUserToPlay(TestCase):
             "title": "Test1",
             "duration": "2",
         }
-        play1 = create_movie(play1)
+        play1 = create_play(play1)
         play1.genres.set([genre])
         res = self.client.get(reverse("theatre:play-detail", args=["1"]))
         serializer = PlayDetailSerializer(play1)

@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 from .models import (
     Play,
@@ -113,7 +113,10 @@ class PerformanceViewSet(GenericViewSet):
                 queryset
                 .select_related("play")
                 .annotate(
-                    seats_available=F("theatre_hall__seats_in_row") - Count("tickets")
+                    seats_available=(
+                            F("theatre_hall__seats_in_row")
+                            - Count("tickets")
+                    )
                 )
             ).order_by("id")
 
