@@ -12,7 +12,7 @@ class Actor(models.Model):
     last_name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"{self.name} {self.last_name}"
+        return f"{self.first_name} {self.last_name}"
 
 
 class Genre(models.Model):
@@ -55,7 +55,11 @@ class TheatreHall(models.Model):
 
 
 class Performance(models.Model):
-    play = models.ForeignKey(Play, on_delete=models.CASCADE)
+    play = models.ForeignKey(
+        Play,
+        on_delete=models.CASCADE,
+        related_name="performances"
+    )
     theatre_hall = models.ForeignKey(
         TheatreHall,
         on_delete=models.CASCADE,
@@ -111,9 +115,9 @@ class Ticket(models.Model):
             })
 
     def clean(self):
-        Ticket.validate_row(
+        Ticket.validate_seat(
             self.seat,
-            self.ticket.performance.theatre_hall.seats_in_row,
+            self.performance.theatre_hall.seats_in_row,
             ValidationError
         )
 

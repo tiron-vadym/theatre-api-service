@@ -33,12 +33,11 @@ class PlaySerializer(serializers.ModelSerializer):
             "description",
             "actors",
             "genres",
-            "actor_count",
             "image"
         )
 
 
-class PlayListSerializer(serializers.ModelSerializer):
+class PlayListSerializer(PlaySerializer):
     class Meta:
         model = Play
         fields = (
@@ -50,7 +49,7 @@ class PlayListSerializer(serializers.ModelSerializer):
         )
 
 
-class PlayDetailSerializer(serializers.ModelSerializer):
+class PlayDetailSerializer(PlaySerializer):
     class Meta:
         model = Play
         fields = (
@@ -76,7 +75,6 @@ class TheatreHallSerializer(serializers.ModelSerializer):
 
 
 class PerformanceSerializer(serializers.ModelSerializer):
-    play = PlaySerializer(many=False, read_only=True)
 
     class Meta:
         model = Performance
@@ -84,7 +82,8 @@ class PerformanceSerializer(serializers.ModelSerializer):
 
 
 class PerformanceListSerializer(PerformanceSerializer):
-    play = PlaySerializer(many=False, read_only=True)
+    play = serializers.CharField(source="play.title", read_only=True)
+    theatre_hall = serializers.CharField(source="theatre_hall.name", read_only=True)
     seats_available = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -94,6 +93,7 @@ class PerformanceListSerializer(PerformanceSerializer):
 
 class PerformanceDetailSerializer(PerformanceSerializer):
     play = PlaySerializer(many=False, read_only=True)
+    theatre_hall = TheatreHallSerializer(many=False, read_only=True)
     taken_seats = serializers.SerializerMethodField()
 
     class Meta:
@@ -112,7 +112,7 @@ class TicketSerializer(serializers.ModelSerializer):
         data = super(TicketSerializer, self).validate(attrs)
         Ticket.validate_seat(
             attrs["seat"],
-            attrs["ticket"].performance.theatre_hall.seats_in_row,
+            attrs["performance"].theatre_hall.seats_in_row,
             serializers.ValidationError
         )
         return data
@@ -122,8 +122,8 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "row", "seat", "performance", "reservation")
 
 
-class TicketListSerializer(TicketSerializer):
-    performance = PerformanceSerializer(many=False, read_only=True)
+class TicketListSerializer(serializers.ModelSerializer):
+    performance = PerformanceListSerializer(many=False, read_only=True)
     owner = serializers.CharField(source="reservation.user", read_only=True)
 
     class Meta:
@@ -132,23 +132,14 @@ class TicketListSerializer(TicketSerializer):
 
 
 class ReservationSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
     class Meta:
         model = Reservation
-        fields = ("id", "tickets", "created_at")
-
-    @transaction.atomic
-    def create(self, validated_data):
-        tickets_data = validated_data.pop("tickets")
-        reservation = Reservation.objects.create(**validated_data)
-        for tickets_data in tickets_data:
-            Ticket.objects.create(reservation=reservation, **tickets_data)
-        return reservation
+        fields = ("id", "user", "created_at")
 
 
-class ReservationListSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=True)
+class ReservationListSerializer(ReservationSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Reservation
@@ -156,7 +147,7 @@ class ReservationListSerializer(serializers.ModelSerializer):
 
 
 class TicketDetailSerializer(TicketSerializer):
-    performance = PerformanceSerializer(many=False, read_only=True)
+    performance = PerformanceDetailSerializer(many=False, read_only=True)
     reservation = ReservationSerializer(many=False, read_only=True)
 
     class Meta:

@@ -1,7 +1,7 @@
 from django.db.models import Count, F
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.viewsets import GenericViewSet
-from rest_framework import status
+from rest_framework.viewsets import ModelViewSet
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -36,31 +36,31 @@ from .serializers import (
 from .permissions import IsAdminOrIfAuthenticatedReadOnly
 
 
-class ActorViewSet(GenericViewSet):
+class ActorViewSet(ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
-class GenreViewSet(GenericViewSet):
+class GenreViewSet(ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
-class PlayViewSet(GenericViewSet):
-    queryset = Play.objects.all().prefetch_related("actors", "genres")
+class PlayViewSet(viewsets.ModelViewSet):
+    queryset = Play.objects.all()
     serializer_class = PlaySerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = super().get_queryset()
         title = self.request.query_params.get("title")
 
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        return queryset.distinct()
+        return queryset.prefetch_related("actors", "genres").distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -94,13 +94,13 @@ class PlayViewSet(GenericViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class TheatreHallViewSet(GenericViewSet):
+class TheatreHallViewSet(ModelViewSet):
     queryset = TheatreHall.objects.all()
     serializer_class = TheatreHallSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
-class PerformanceViewSet(GenericViewSet):
+class PerformanceViewSet(ModelViewSet):
     queryset = Performance.objects.all()
     serializer_class = PerformanceSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -111,7 +111,7 @@ class PerformanceViewSet(GenericViewSet):
         if self.action == "list":
             queryset = (
                 queryset
-                .select_related("play")
+                .select_related("play", "theatre_hall")
                 .annotate(
                     seats_available=(
                             F("theatre_hall__seats_in_row")
@@ -136,7 +136,7 @@ class ReservationPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class ReservationViewSet(GenericViewSet):
+class ReservationViewSet(ModelViewSet):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -146,10 +146,9 @@ class ReservationViewSet(GenericViewSet):
         queryset = self.queryset.filter(user=self.request.user)
         if self.action == "list":
             queryset = queryset.select_related(
-                "tickets__performance__play",
-                "tickets__performance__theatre_hall",
-                "reservations__performance__play",
-                "reservations__performance__theatre_hall"
+                "user",
+            ).prefetch_related(
+                "tickets__performance"
             )
 
         return queryset
@@ -163,7 +162,7 @@ class ReservationViewSet(GenericViewSet):
         return ReservationSerializer
 
 
-class TicketViewSet(GenericViewSet):
+class TicketViewSet(ModelViewSet):
     queryset = Ticket.objects.all().select_related(
         "performance",
         "reservation"
