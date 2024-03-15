@@ -44,13 +44,13 @@ docker-compose up
 * Used nested serializers, different serializer relations, field source and SerializerMethodField
 * Privacy for every reservation
 * Implemented validation for tickets
-* Filtering feature for plays
-* Taken seats for performances
-* Tickets available feature for performances
-* Reservation history with pagination
+* Filtering feature for plays is located at /api/theatre/plays/?title=
+* Taken seats for performances /api/theatre/performances/pk/
+* Tickets available feature for performances is located at /api/theatre/performances/
+* Reservation history with pagination /api/theatre/reservations/
 * Custom permissions
 * Implemented logic for uploading images for plays
-* Used email instead of username for users
+* Used email instead of username for users /api/user/register/
 
 ## DB schema
 

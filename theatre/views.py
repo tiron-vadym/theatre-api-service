@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 
-from .models import (
+from theatre.models import (
     Play,
     Actor,
     Genre,
@@ -16,7 +16,7 @@ from .models import (
     Reservation,
     Ticket,
 )
-from .serializers import (
+from theatre.serializers import (
     PlaySerializer,
     PlayListSerializer,
     PlayDetailSerializer,
@@ -33,7 +33,7 @@ from .serializers import (
     TicketListSerializer,
     TicketDetailSerializer,
 )
-from .permissions import IsAdminOrIfAuthenticatedReadOnly
+from theatre.permissions import IsAdminOrIfAuthenticatedReadOnly
 
 
 class ActorViewSet(ModelViewSet):
