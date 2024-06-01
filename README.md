@@ -1,4 +1,4 @@
-# Theatre API Service
+# StageCraft
 
 API service for theatre management written on DRF
 
